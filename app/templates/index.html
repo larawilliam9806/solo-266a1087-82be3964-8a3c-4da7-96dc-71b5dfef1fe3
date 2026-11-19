@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <h2>上传 CSV</h2>
+  <div class="uploads">
+    <form method="post" action="{{ url_for('main.upload', kind='readings') }}" enctype="multipart/form-data">
+      <h3>电表读数</h3>
+      <p class="hint">表头 <code>point,ts,value</code>：计量点、UTC 时刻（如 2026-01-02T03:04:05Z）、非负十进制千瓦时累计读数。</p>
+      <input type="file" name="file" accept=".csv" required>
+      <button type="submit">上传读数</button>
+    </form>
+    <form method="post" action="{{ url_for('main.upload', kind='swaps') }}" enctype="multipart/form-data">
+      <h3>换表记录</h3>
+      <p class="hint">表头 <code>point,ts</code>：计量点、UTC 换表时刻。换表后区间标记为缺口，不推算增量。</p>
+      <input type="file" name="file" accept=".csv" required>
+      <button type="submit">上传换表</button>
+    </form>
+  </div>
+</section>
+
+<section class="card">
+  <h2>查询逐日用量</h2>
+  <form method="get" action="{{ url_for('main.usage') }}" class="query">
+    <label>计量点
+      <select name="point" required>
+        <option value="" disabled selected>请选择</option>
+        {% for p in points %}<option value="{{ p }}">{{ p }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>开始日期 <input type="date" name="start"></label>
+    <label>结束日期 <input type="date" name="end"></label>
+    <button type="submit">查询</button>
+    <span class="hint">不填日期时默认该点数据的最近 31 天</span>
+  </form>
+  {% if not points %}<p class="hint">暂无数据，请先上传读数 CSV。</p>{% endif %}
+</section>
+
+<section class="card">
+  <h2>最近上传批次</h2>
+  <table>
+    <thead>
+      <tr><th>批次</th><th>时间</th><th>类型</th><th>文件</th><th>状态</th><th>说明</th></tr>
+    </thead>
+    <tbody>
+      {% for u in uploads %}
+      <tr class="{{ u['status'] }}">
+        <td>#{{ u['id'] }}</td>
+        <td>{{ u['created_at'] | fmt_ts }}</td>
+        <td>{{ kind_names.get(u['kind'], u['kind']) }}</td>
+        <td>{{ u['filename'] }}</td>
+        <td>{{ '已生效' if u['status'] == 'applied' else '已拒绝' }}</td>
+        <td>{{ u['message'] }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="hint">暂无上传记录</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

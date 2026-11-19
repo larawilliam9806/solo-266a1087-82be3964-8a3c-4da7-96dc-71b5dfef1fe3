@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}逐日用量 - 电量日核算{% endblock %}
+{% block content %}
+<section class="card">
+  <h2>查询逐日用量</h2>
+  <form method="get" action="{{ url_for('main.usage') }}" class="query">
+    <label>计量点
+      <select name="point" required>
+        {% for p in points %}
+        <option value="{{ p }}" {{ 'selected' if p == point }}>{{ p }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>开始日期 <input type="date" name="start" value="{{ start }}"></label>
+    <label>结束日期 <input type="date" name="end" value="{{ end }}"></label>
+    <button type="submit">查询</button>
+  </form>
+</section>
+
+{% if error %}
+<div class="flash error">{{ error }}</div>
+{% endif %}
+
+{% if days is not none %}
+<section class="card">
+  <h2>计量点 {{ point }}：{{ start }} ~ {{ end }}</h2>
+  <p>合计用量：<strong>{{ total | fmt_num }}</strong> kWh
+     （数据版本 v{{ version }}，增量计入后次读数所属 UTC 日）</p>
+  <table>
+    <thead><tr><th>日期 (UTC)</th><th>用量 (kWh)</th><th>备注</th></tr></thead>
+    <tbody>
+      {% for d in days %}
+      <tr class="{{ 'gapday' if d.gap }}">
+        <td>{{ d.day }}</td>
+        <td class="num">{{ d.kwh | fmt_num }}</td>
+        <td>{{ '含缺口区间' if d.gap }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h2>缺口区间</h2>
+  {% if gaps %}
+  <table>
+    <thead><tr><th>区间起点（不含）</th><th>区间终点（含）</th><th>说明</th></tr></thead>
+    <tbody>
+      {% for g in gaps %}
+      <tr>
+        <td>{{ g.start | fmt_ts }}</td>
+        <td>{{ g.end | fmt_ts }}</td>
+        <td>区间内发生换表，不推算增量</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="hint">所选范围内没有缺口区间。</p>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

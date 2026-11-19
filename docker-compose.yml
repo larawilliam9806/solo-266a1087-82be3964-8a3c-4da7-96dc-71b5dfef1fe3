@@ -1,0 +1,15 @@
+services:
+  web:
+    build: .
+    image: meter-usage-web
+    ports:
+      - "8000:8000"
+    environment:
+      APP_DATABASE: /data/app.db
+      # SECRET_KEY: 请在生产环境设置
+    volumes:
+      - meter-data:/data
+    restart: unless-stopped
+
+volumes:
+  meter-data:
