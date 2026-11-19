@@ -28,6 +28,18 @@ CREATE TABLE IF NOT EXISTS swaps (
     upload_id INTEGER NOT NULL REFERENCES uploads(id),
     PRIMARY KEY (point, ts)
 );
+
+-- 15 分钟尖峰缓存：按 (计量点, UTC 日) 保存；上传事务内按受影响日期增量刷新
+CREATE TABLE IF NOT EXISTS daily_peaks (
+    point       TEXT NOT NULL,
+    day         TEXT NOT NULL,                 -- YYYY-MM-DD（UTC）
+    status      TEXT NOT NULL,                 -- ok | none
+    peak_kw     TEXT,                          -- 最高 15 分钟平均功率（Decimal 文本）
+    reason      TEXT,                          -- status = none 时说明原因
+    ties        TEXT NOT NULL DEFAULT '[]',    -- 并列时段 JSON 数组
+    computed_at TEXT NOT NULL,
+    PRIMARY KEY (point, day)
+);
 """
 
 

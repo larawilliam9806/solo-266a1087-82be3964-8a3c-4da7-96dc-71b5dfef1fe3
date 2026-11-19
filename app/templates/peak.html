@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}15 分钟尖峰 - 电量日核算{% endblock %}
+{% block content %}
+<section class="card">
+  <h2>查询 15 分钟尖峰</h2>
+  <form method="get" action="{{ url_for('main.peak') }}" class="query">
+    <label>计量点
+      <select name="point" required>
+        {% if not point %}<option value="" disabled selected>请选择</option>{% endif %}
+        {% for p in points %}
+        <option value="{{ p }}" {{ 'selected' if p == point }}>{{ p }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>UTC 日期 <input type="date" name="day" value="{{ day }}"></label>
+    <button type="submit">查询</button>
+    <span class="hint">不填日期时取该点最后一个读数区间覆盖的 UTC 日</span>
+  </form>
+</section>
+
+{% if error %}
+<div class="flash error">{{ error }}</div>
+{% endif %}
+
+{% if result %}
+<section class="card">
+  <h2>计量点 {{ result.point }}：{{ result.day }}（UTC）</h2>
+  {% if result.status == 'ok' %}
+  <p>当日最高 15 分钟平均功率：<strong>{{ result.peak_kw }}</strong> kW
+     （数据版本 v{{ version }}）</p>
+  <p class="hint">时段从 UTC 零点起每 15 分钟一段，按区间与时段的重合时长比例分摊电量；
+    只有整段都被无换表读数区间覆盖时才参与比较。</p>
+  <h3>并列时段（{{ result.ties | length }} 个）</h3>
+  <table>
+    <thead><tr><th>时段起点（含）</th><th>时段终点（不含）</th><th>平均功率 (kW)</th></tr></thead>
+    <tbody>
+      {% for t in result.ties %}
+      <tr>
+        <td>{{ t.start | fmt_ts }}</td>
+        <td>{{ t.end | fmt_ts }}</td>
+        <td class="num">{{ t.kw }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="flash error">当日没有可比较的完整 15 分钟时段：{{ result.reason }}</p>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

@@ -32,6 +32,7 @@
     <button type="submit">查询</button>
     <span class="hint">不填日期时默认该点数据的最近 31 天</span>
   </form>
+  <p class="hint">需要查看当日最高 15 分钟平均功率？<a href="{{ url_for('main.peak') }}">查询 15 分钟尖峰</a></p>
   {% if not points %}<p class="hint">暂无数据，请先上传读数 CSV。</p>{% endif %}
 </section>
 
